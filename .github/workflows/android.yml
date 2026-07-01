@@ -44,8 +44,12 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        if gh release view latest >/dev/null 2>&1; then
-          gh release upload latest app/build/outputs/apk/release/app-release.apk --clobber
+        VERSION_NAME=$(grep -E 'versionName\s*=\s*' app/build.gradle.kts | head -n1 | cut -d'"' -f2)
+        TAG_NAME="v$VERSION_NAME"
+        echo "Releasing version $VERSION_NAME (tag: $TAG_NAME)"
+        
+        if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+          gh release upload "$TAG_NAME" app/build/outputs/apk/release/app-release.apk --clobber
         else
-          gh release create latest app/build/outputs/apk/release/app-release.apk --title "Latest Build" --notes "This release is automatically updated with the latest compiled APK on every push." --prerelease
+          gh release create "$TAG_NAME" app/build/outputs/apk/release/app-release.apk --title "v$VERSION_NAME" --notes "Automated release for version $VERSION_NAME."
         fi
