@@ -54,14 +54,14 @@ object DistortionManager {
         // Use Math.floorDiv to handle negative elapsed times just in case
         val elapsedHours = Math.floorDiv(elapsedMillis, 1000L * 60 * 60)
         
-        var currentIndex = (anchorIndex + elapsedHours) % 7
-        if (currentIndex < 0) currentIndex += 7
+        var currentIndex = (anchorIndex + elapsedHours) % DESTINATIONS.size
+        if (currentIndex < 0) currentIndex += DESTINATIONS.size
         
         return currentIndex.toInt()
     }
 
     fun getNextDistortionIndex(context: Context): Int {
-        return (getCurrentDistortionIndex(context) + 1) % 7
+        return (getCurrentDistortionIndex(context) + 1) % DESTINATIONS.size
     }
 
     // Gets the remaining time for the current distortion in milliseconds

@@ -47,7 +47,7 @@ class DistortionAlarmReceiver : BroadcastReceiver() {
             notificationBuilder.setChronometerCountDown(true)
         }
 
-        notificationManager.notify(1, notificationBuilder.build())
+        notificationManager.notify(targetIndex + if (is5MinuteWarning) 100 else 0, notificationBuilder.build())
 
         // Reschedule for the next cycle (7 hours later) if this is still the active target
         val currentTarget = com.example.distortiontracker.data.DistortionManager.getTargetDistortion(context)

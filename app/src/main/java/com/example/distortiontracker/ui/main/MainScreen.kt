@@ -16,11 +16,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -39,8 +37,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.distortiontracker.data.DistortionManager
 import com.example.distortiontracker.theme.NeonCrimson
-import com.example.distortiontracker.theme.VoidSpaceDark
-import com.example.distortiontracker.theme.VoidSpaceLight
 import kotlinx.coroutines.flow.StateFlow
 
 // Frosted glass card background color
@@ -483,7 +479,7 @@ fun DistortionDashboard(
 
         if (notificationsEnabled) {
             Text(
-                text = "Notifying 20 min before: ${DistortionManager.DESTINATIONS[state.targetDistortionIndex]}",
+                text = "Notifying ${if (state.is5MinWarning) 5 else 20} min before: ${DistortionManager.DESTINATIONS[state.targetDistortionIndex]}",
                 color = Color(0xFF888888),
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 8.dp)
@@ -923,12 +919,15 @@ fun androidx.compose.foundation.layout.BoxScope.GlassLayer(
 
 // Custom card shape that bulges out in the center to accommodate the glowing ring
 class DestinationCardShape(private val circleRadiusDp: androidx.compose.ui.unit.Dp = 80.dp) : androidx.compose.ui.graphics.Shape {
+    private val cachedPath = androidx.compose.ui.graphics.Path()
+
     override fun createOutline(
         size: androidx.compose.ui.geometry.Size,
         layoutDirection: androidx.compose.ui.unit.LayoutDirection,
         density: androidx.compose.ui.unit.Density
     ): androidx.compose.ui.graphics.Outline {
-        val path = androidx.compose.ui.graphics.Path()
+        val path = cachedPath
+        path.reset()
         val width = size.width
         val height = size.height
         val circleRadius = with(density) { circleRadiusDp.toPx() }

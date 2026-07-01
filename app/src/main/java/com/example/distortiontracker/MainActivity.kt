@@ -19,10 +19,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.distortiontracker.theme.DistortionTrackerTheme
 import com.example.distortiontracker.ui.main.PermissionsScreen
 
 class MainActivity : ComponentActivity() {
+  private fun checkAllPermissions(context: Context): Boolean {
+    return (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) &&
+           (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).canScheduleExactAlarms())
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
@@ -30,20 +36,17 @@ class MainActivity : ComponentActivity() {
     setContent {
       var hasAllPermissions by remember {
         mutableStateOf(
-          (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) &&
-          (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || (getSystemService(Context.ALARM_SERVICE) as AlarmManager).canScheduleExactAlarms())
+          checkAllPermissions(this@MainActivity)
         )
       }
 
       val context = this@MainActivity
-      val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+      val lifecycleOwner = LocalLifecycleOwner.current
 
       androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
           if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-            hasAllPermissions =
-              (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) &&
-              (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).canScheduleExactAlarms())
+            hasAllPermissions = checkAllPermissions(context)
           }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

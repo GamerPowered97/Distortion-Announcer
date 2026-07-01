@@ -16,18 +16,18 @@ object DistortionAlarmScheduler {
         val offsetMillis = if (is5MinuteWarning) 5 * 60 * 1000L else 20 * 60 * 1000L
         
         val targetTimeMillis = if (fromTriggerTime != null) {
-            fromTriggerTime + 7 * 60 * 60 * 1000L
+            fromTriggerTime + DistortionManager.DESTINATIONS.size * 60 * 60 * 1000L
         } else {
             // Calculate time until target distortion
             val currentIndex = DistortionManager.getCurrentDistortionIndex(context)
             val timeRemainingMillis = DistortionManager.getTimeRemainingMillis()
             
             var hourDiff = targetIndex - currentIndex
-            if (hourDiff <= 0) hourDiff += 7
+            if (hourDiff <= 0) hourDiff += DistortionManager.DESTINATIONS.size
             
-            // If it's currently active, the NEXT one is 7 hours away
+            // If it's currently active, the NEXT one is N hours away
             if (targetIndex == currentIndex && timeRemainingMillis > 0) {
-                hourDiff = 7
+                hourDiff = DistortionManager.DESTINATIONS.size
             }
 
             // Total time until target starts
@@ -35,7 +35,7 @@ object DistortionAlarmScheduler {
             
             // Safety check: if trigger time is in the past, shift to the next cycle (7 hours later)
             if (calculatedTargetTime - offsetMillis <= System.currentTimeMillis()) {
-                calculatedTargetTime + 7 * 60 * 60 * 1000L
+                calculatedTargetTime + DistortionManager.DESTINATIONS.size * 60 * 60 * 1000L
             } else {
                 calculatedTargetTime
             }
@@ -72,8 +72,10 @@ object DistortionAlarmScheduler {
             context,
             targetIndex,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
-        alarmManager.cancel(pendingIntent)
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent)
+        }
     }
 }

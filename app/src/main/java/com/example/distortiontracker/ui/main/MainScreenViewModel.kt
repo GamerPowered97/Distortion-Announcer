@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.distortiontracker.data.DistortionManager
+import com.example.distortiontracker.notification.DistortionAlarmScheduler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,6 +45,7 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
         val currentIndex = DistortionManager.getCurrentDistortionIndex(context)
         val nextIndex = DistortionManager.getNextDistortionIndex(context)
         val targetIndex = DistortionManager.getTargetDistortion(context)
+        val is5MinWarning = DistortionManager.is5MinWarning(context)
 
         _uiState.value = DistortionUiState(
             isCalibrated = isCalibrated,
@@ -51,7 +53,8 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
             currentDistortionIndex = currentIndex,
             nextDistortion = DistortionManager.DESTINATIONS[nextIndex],
             nextDistortionIndex = nextIndex,
-            targetDistortionIndex = targetIndex
+            targetDistortionIndex = targetIndex,
+            is5MinWarning = is5MinWarning
         )
     }
 
@@ -60,23 +63,23 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
         val targetIndex = DistortionManager.getTargetDistortion(context)
         val is5Min = DistortionManager.is5MinWarning(context)
         if (targetIndex >= 0) {
-            for (i in 0 until 7) {
-                com.example.distortiontracker.notification.DistortionAlarmScheduler.cancelAlarm(context, i)
+            for (i in 0 until DistortionManager.DESTINATIONS.size) {
+                DistortionAlarmScheduler.cancelAlarm(context, i)
             }
-            com.example.distortiontracker.notification.DistortionAlarmScheduler.scheduleAlarm(context, targetIndex, is5Min)
+            DistortionAlarmScheduler.scheduleAlarm(context, targetIndex, is5Min)
         }
         updateState()
     }
 
     fun setTarget(index: Int, is5MinWarning: Boolean = false) {
-        for (i in 0 until 7) {
-            com.example.distortiontracker.notification.DistortionAlarmScheduler.cancelAlarm(context, i)
+        for (i in 0 until DistortionManager.DESTINATIONS.size) {
+            DistortionAlarmScheduler.cancelAlarm(context, i)
         }
         DistortionManager.setTargetDistortion(context, index, is5MinWarning)
         updateState()
         
         if (index >= 0) {
-            com.example.distortiontracker.notification.DistortionAlarmScheduler.scheduleAlarm(context, index, is5MinWarning)
+            DistortionAlarmScheduler.scheduleAlarm(context, index, is5MinWarning)
         }
     }
 }
@@ -87,5 +90,6 @@ data class DistortionUiState(
     val currentDistortionIndex: Int = 0,
     val nextDistortion: String = "",
     val nextDistortionIndex: Int = 1,
-    val targetDistortionIndex: Int = -1
+    val targetDistortionIndex: Int = -1,
+    val is5MinWarning: Boolean = false
 )
