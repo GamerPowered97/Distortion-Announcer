@@ -28,15 +28,21 @@ class DistortionAlarmReceiver : BroadcastReceiver() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        val text = if (timeRemaining <= 5) {
-            "Then what the hell are you doing here? Get in the game! $distortionName Distortion starts in 5 minutes!"
+        val title = if (is5MinuteWarning) {
+            "BREACH DETECTED"
+        } else {
+            "Distortion Imminent"
+        }
+
+        val text = if (is5MinuteWarning) {
+            "Distortion opening at $distortionName! Transmat immediately, Guardian!"
         } else {
             "Eyes up, Guardian. $distortionName Distortion starts in 20 minutes!"
         }
 
         val notificationBuilder = NotificationCompat.Builder(context, "distortion_channel")
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentTitle("Distortion Tracker")
+            .setContentTitle(title)
             .setContentText(text)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)

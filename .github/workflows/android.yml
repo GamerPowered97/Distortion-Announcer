@@ -48,8 +48,11 @@ jobs:
         TAG_NAME="v$VERSION_NAME"
         echo "Releasing version $VERSION_NAME (tag: $TAG_NAME)"
         
+        python scripts/extract_changelog.py "$VERSION_NAME" > release-notes.txt
+        
         if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+          gh release edit "$TAG_NAME" --notes-file release-notes.txt
           gh release upload "$TAG_NAME" app/build/outputs/apk/release/app-release.apk --clobber
         else
-          gh release create "$TAG_NAME" app/build/outputs/apk/release/app-release.apk --title "v$VERSION_NAME" --notes "Automated release for version $VERSION_NAME."
+          gh release create "$TAG_NAME" app/build/outputs/apk/release/app-release.apk --title "v$VERSION_NAME" --notes-file release-notes.txt
         fi

@@ -66,7 +66,12 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
             for (i in 0 until DistortionManager.DESTINATIONS.size) {
                 DistortionAlarmScheduler.cancelAlarm(context, i)
             }
-            DistortionAlarmScheduler.scheduleAlarm(context, targetIndex, is5Min)
+            if (is5Min) {
+                DistortionAlarmScheduler.scheduleAlarm(context, targetIndex, true)
+            } else {
+                DistortionAlarmScheduler.scheduleAlarm(context, targetIndex, false)
+                DistortionAlarmScheduler.scheduleAlarm(context, targetIndex, true)
+            }
         }
         updateState()
     }
@@ -79,7 +84,12 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
         updateState()
         
         if (index >= 0) {
-            DistortionAlarmScheduler.scheduleAlarm(context, index, is5MinWarning)
+            if (is5MinWarning) {
+                DistortionAlarmScheduler.scheduleAlarm(context, index, true)
+            } else {
+                DistortionAlarmScheduler.scheduleAlarm(context, index, false)
+                DistortionAlarmScheduler.scheduleAlarm(context, index, true)
+            }
         }
     }
 }

@@ -51,9 +51,10 @@ object DistortionAlarmScheduler {
             putExtra("IS_5_MINUTE_WARNING", is5MinuteWarning)
         }
         
+        val requestCode = targetIndex + if (is5MinuteWarning) 100 else 0
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            targetIndex,
+            requestCode,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -68,14 +69,29 @@ object DistortionAlarmScheduler {
     fun cancelAlarm(context: Context, targetIndex: Int) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, DistortionAlarmReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
+        
+        // Cancel 20-minute alarm
+        val pending20 = PendingIntent.getBroadcast(
             context,
             targetIndex,
             intent,
             PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
-        if (pendingIntent != null) {
-            alarmManager.cancel(pendingIntent)
+        if (pending20 != null) {
+            alarmManager.cancel(pending20)
+            pending20.cancel()
+        }
+
+        // Cancel 5-minute alarm
+        val pending5 = PendingIntent.getBroadcast(
+            context,
+            targetIndex + 100,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pending5 != null) {
+            alarmManager.cancel(pending5)
+            pending5.cancel()
         }
     }
 }

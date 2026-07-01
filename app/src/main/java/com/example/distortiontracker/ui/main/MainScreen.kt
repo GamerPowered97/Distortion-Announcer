@@ -88,7 +88,7 @@ fun CalibrationScreen(onCalibrate: (Int) -> Unit) {
         // Header
         Text(
             text = "DISTORTION TRACKER",
-            color = Color.White,
+            color = Color.Black,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 2.sp,
@@ -109,15 +109,15 @@ fun CalibrationScreen(onCalibrate: (Int) -> Unit) {
 
         Text(
             text = "CALIBRATION REQUIRED",
-            color = NeonCrimson,
+            color = Color.Black,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 2.sp,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         Text(
-            text = "Select the currently active Distortion in-game to sync the tracker.",
-            color = Color(0xFFB0BEC5),
+            text = "Select the active in-game Distortion to calibrate the tracker.",
+            color = Color.Black,
             fontSize = 14.sp,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(bottom = 32.dp)
@@ -138,7 +138,7 @@ fun CalibrationScreen(onCalibrate: (Int) -> Unit) {
                 )
                 Text(
                     text = name,
-                    color = Color.White,
+                    color = Color.Black,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     letterSpacing = 1.sp,
@@ -496,7 +496,7 @@ fun DistortionDashboard(
         AlertDialog(
             onDismissRequest = { showWarningDialog = false },
             title = { Text("TOO LATE!") },
-            text = { Text("Then what the hell are you doing here? Get in the game! It starts in less than 5 minutes!") },
+            text = { Text("Why the hell are you still here? Get in the game! It starts in less than 5 minutes!") },
             confirmButton = {
                 TextButton(onClick = { showWarningDialog = false }) {
                     Text("ON MY WAY", color = NeonCrimson, fontWeight = FontWeight.Bold)
@@ -550,9 +550,9 @@ fun GlowingRing(size: Float) {
             animation = keyframes {
                 durationMillis = 2000
                 1.0f at 0
-                1.08f at 150 with FastOutSlowInEasing
-                0.98f at 350 with FastOutSlowInEasing
-                1.03f at 500 with FastOutSlowInEasing
+                1.08f at 150 using FastOutSlowInEasing
+                0.98f at 350 using FastOutSlowInEasing
+                1.03f at 500 using FastOutSlowInEasing
                 1.0f at 700
                 1.0f at 2000
             }

@@ -1,5 +1,6 @@
 package com.example.distortiontracker
 
+import android.os.PowerManager
 import android.Manifest
 import android.app.AlarmManager
 import android.content.Context
@@ -25,8 +26,15 @@ import com.example.distortiontracker.ui.main.PermissionsScreen
 
 class MainActivity : ComponentActivity() {
   private fun checkAllPermissions(context: Context): Boolean {
+    val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+    val isIgnoringBattery = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+      powerManager.isIgnoringBatteryOptimizations(context.packageName)
+    } else {
+      true
+    }
     return (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) &&
-           (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).canScheduleExactAlarms())
+           (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || (context.getSystemService(Context.ALARM_SERVICE) as AlarmManager).canScheduleExactAlarms()) &&
+           isIgnoringBattery
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
