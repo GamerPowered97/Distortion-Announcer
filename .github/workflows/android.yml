@@ -44,4 +44,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh release create latest app/build/outputs/apk/release/app-release.apk --title "Latest Build" --notes "This release is automatically updated with the latest compiled APK on every push." --prerelease --clobber
+        if gh release view latest >/dev/null 2>&1; then
+          gh release upload latest app/build/outputs/apk/release/app-release.apk --clobber
+        else
+          gh release create latest app/build/outputs/apk/release/app-release.apk --title "Latest Build" --notes "This release is automatically updated with the latest compiled APK on every push." --prerelease
+        fi
