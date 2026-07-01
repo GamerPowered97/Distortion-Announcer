@@ -10,8 +10,8 @@ android {
         applicationId = "com.example.distortiontracker"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "9.7.0.3"
+        versionCode = 3
+        versionName = "9.8.0.0"
     }
 
     signingConfigs {

@@ -2,6 +2,17 @@
 
 All notable changes to the Destiny Distortion Tracker will be documented in this file.
 
+## [9.8.0.0] - 2026-07-01
+### Added
+- **Dynamic Themes**: Implemented responsive visual themes in the Distortion Tracker that dynamically adjust based on active tracking states, using prototype-matched colors and gradients.
+- **24h Timeline**: Integrated a comprehensive 24-hour timeline display tracking future distortion events.
+- **Info Cards**: Introduced details cards to present status information and tracking metrics cleanly.
+- **Custom Alerts**: Added customizable alert parameters for notifications and custom warning thresholds.
+- **Rift Borders**: Added crawling red electric border effects wrapping the Timer and Up Next UI cards.
+- **High-Fidelity Anomaly Ring**: Upgraded the central planetary distortion animation with high-definition fractal pathing, breathing background halo overlays, and orbiting spark particles.
+
+---
+
 ## [9.7.0.3] - 2026-07-01
 ### Added
 - **Battery Optimization Onboarding**: Added background check at startup prompting users to disable battery restrictions (`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`).
