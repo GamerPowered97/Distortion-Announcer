@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.distortiontracker.data.DistortionManager
 import com.example.distortiontracker.notification.DistortionAlarmScheduler
+import com.example.distortiontracker.widget.DistortionWidgetProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,6 +57,9 @@ class MainScreenViewModel(application: Application) : AndroidViewModel(applicati
             targetDistortionIndex = targetIndex,
             is5MinWarning = is5MinWarning
         )
+        
+        // Ensure widget is synchronized with the new state
+        DistortionWidgetProvider.updateAllWidgets(context)
     }
 
     fun calibrate(index: Int) {

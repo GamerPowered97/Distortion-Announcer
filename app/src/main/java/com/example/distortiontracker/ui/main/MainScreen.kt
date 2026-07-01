@@ -38,6 +38,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.distortiontracker.data.DistortionManager
 import com.example.distortiontracker.theme.NeonCrimson
 import kotlinx.coroutines.flow.StateFlow
+import androidx.compose.foundation.horizontalScroll
+import java.util.Calendar
+import java.util.Locale
 
 // Frosted glass card background color
 private val GlassBackground = Color(0x60404859)
@@ -102,7 +105,7 @@ fun CalibrationScreen(onCalibrate: (Int) -> Unit) {
                 .padding(bottom = 8.dp),
             contentAlignment = Alignment.Center
         ) {
-            GlowingRing(size = 120f)
+            GlowingRing(size = 120f, destinationIndex = 2)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -159,6 +162,7 @@ fun DistortionDashboard(
     var showWarningDialog by remember { mutableStateOf(false) }
     var warningType by remember { mutableStateOf("") } // "5min" or "20min"
     var pendingTargetIndex by remember { mutableStateOf(-1) }
+    var showInfoDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -182,7 +186,8 @@ fun DistortionDashboard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp),
+                .height(180.dp)
+                .clickable { showInfoDialog = true },
             contentAlignment = Alignment.Center
         ) {
             GlassLayer(
@@ -190,12 +195,12 @@ fun DistortionDashboard(
                 color = GlassBackground
             )
             
-            // Glowing Red Ring in the center
+            // Glowing Ring in the center
             Box(
                 modifier = Modifier.size(160.dp),
                 contentAlignment = Alignment.Center
             ) {
-                GlowingRing(size = 140f)
+                GlowingRing(size = 140f, destinationIndex = state.currentDistortionIndex)
                 Text(
                     text = state.currentDistortion,
                     color = Color.White,
@@ -424,6 +429,13 @@ fun DistortionDashboard(
         Spacer(modifier = Modifier.height(16.dp))
 
         // ═══════════════════════════════════════
+        // SOLAR SCHEDULE TIMELINE
+        // ═══════════════════════════════════════
+        SolarScheduleSection(currentDistortionIndex = state.currentDistortionIndex)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // ═══════════════════════════════════════
         // NOTIFICATION TOGGLE
         // ═══════════════════════════════════════
         val notificationsEnabled = state.targetDistortionIndex >= 0
@@ -533,13 +545,89 @@ fun DistortionDashboard(
             shape = RoundedCornerShape(16.dp)
         )
     }
+
+    if (showInfoDialog) {
+        val info = getDestinationInfo(state.currentDistortionIndex)
+        val theme = getDestinationTheme(state.currentDistortionIndex)
+        AlertDialog(
+            onDismissRequest = { showInfoDialog = false },
+            title = {
+                Text(
+                    text = info.title,
+                    color = theme.primaryColor,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.5.sp
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = info.lore,
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                        fontWeight = FontWeight.Normal
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(theme.accentColor.copy(alpha = 0.3f))
+                    )
+                    Column {
+                        Text(
+                            text = "KEY ACTIVITIES",
+                            color = theme.accentColor,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = info.activities,
+                            color = Color(0xFFE0E0E0),
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "ZONE POINTERS",
+                            color = theme.accentColor,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = info.tips,
+                            color = Color(0xFFE0E0E0),
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showInfoDialog = false }) {
+                    Text("CLOSE", color = theme.primaryColor, fontWeight = FontWeight.Bold)
+                }
+            },
+            containerColor = Color(0xFF15181F),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.border(1.dp, theme.primaryColor.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+        )
+    }
 }
 
 // ═══════════════════════════════════════════════
 // GLOWING RED RING — the signature distortion icon
 // ═══════════════════════════════════════════════
 @Composable
-fun GlowingRing(size: Float) {
+fun GlowingRing(size: Float, destinationIndex: Int = 2) {
+    val theme = remember(destinationIndex) { getDestinationTheme(destinationIndex) }
     val infiniteTransition = rememberInfiniteTransition(label = "riftAnimation")
     
     // Heartbeat scale animation: quick expansion, quick contraction, then rest
@@ -590,9 +678,9 @@ fun GlowingRing(size: Float) {
     val wispStroke2 = remember(densityLocal) { Stroke(width = with(densityLocal) { 1.5.dp.toPx() }, join = StrokeJoin.Round) }
 
     // Cache gradient color lists
-    val riftColors = remember { listOf(Color(0xFF230835), Color(0xFF0F0419), Color(0xFF020005)) }
-    val vortexColors = remember { listOf(Color(0x35E53935), Color.Transparent, Color(0x35311B92)) }
-    val coronaColors = remember { listOf(NeonCrimson.copy(alpha = 0.45f), NeonCrimson.copy(alpha = 0.15f), Color.Transparent) }
+    val riftColors = remember(theme) { listOf(Color(0xFF230835), Color(0xFF0F0419), Color(0xFF020005)) }
+    val vortexColors = remember(theme) { listOf(theme.primaryColor.copy(alpha = 0.25f), Color.Transparent, theme.accentColor.copy(alpha = 0.25f)) }
+    val coronaColors = remember(theme) { listOf(theme.primaryColor.copy(alpha = 0.45f), theme.primaryColor.copy(alpha = 0.15f), Color.Transparent) }
 
     // Reuse Path objects across drawing frames
     val clipPath = remember { androidx.compose.ui.graphics.Path() }
@@ -676,9 +764,18 @@ fun GlowingRing(size: Float) {
         mainPath.close()
 
         // Draw multiple layers of the crack for a high-intensity glow
-        drawPath(path = mainPath, color = NeonCrimson.copy(alpha = 0.35f), style = thickGlowStroke)
-        drawPath(path = mainPath, color = NeonCrimson.copy(alpha = 0.75f), style = mediumGlowStroke)
-        drawPath(path = mainPath, color = Color(0xFFFFCDD2), style = coreStroke)
+        drawPath(path = mainPath, color = theme.primaryColor.copy(alpha = 0.35f), style = thickGlowStroke)
+        drawPath(path = mainPath, color = theme.accentColor.copy(alpha = 0.75f), style = mediumGlowStroke)
+        
+        val coreColor = theme.primaryColor.copy(alpha = 0.2f).let {
+            Color(
+                red = it.red * it.alpha + (1f - it.alpha),
+                green = it.green * it.alpha + (1f - it.alpha),
+                blue = it.blue * it.alpha + (1f - it.alpha),
+                alpha = 1f
+            )
+        }
+        drawPath(path = mainPath, color = coreColor, style = coreStroke)
 
         // 4. Energetic wisps (arcs trailing around the rift)
         withTransform({
@@ -698,7 +795,7 @@ fun GlowingRing(size: Float) {
                 val y = center.y + r * kotlin.math.sin(angle)
                 if (j == 0) wispPath1.moveTo(x, y) else wispPath1.lineTo(x, y)
             }
-            drawPath(path = wispPath1, color = NeonCrimson.copy(alpha = 0.6f), style = wispStroke1)
+            drawPath(path = wispPath1, color = theme.primaryColor.copy(alpha = 0.6f), style = wispStroke1)
 
             val wispRadius2 = currentRadius * 0.92f
             wispPath2.reset()
@@ -712,7 +809,7 @@ fun GlowingRing(size: Float) {
                 val y = center.y + r * kotlin.math.sin(angle)
                 if (j == 0) wispPath2.moveTo(x, y) else wispPath2.lineTo(x, y)
             }
-            drawPath(path = wispPath2, color = NeonCrimson.copy(alpha = 0.5f), style = wispStroke2)
+            drawPath(path = wispPath2, color = theme.accentColor.copy(alpha = 0.5f), style = wispStroke2)
         }
     }
 }
@@ -745,6 +842,7 @@ fun SpaceBackground(
     nextDistortionIndex: Int = 1,
     modifier: Modifier = Modifier
 ) {
+    val theme = remember(currentDistortionIndex) { getDestinationTheme(currentDistortionIndex) }
     Box(modifier = modifier.fillMaxSize()) {
         // 1. Static Traveler Background Image
         val painter = androidx.compose.ui.res.painterResource(id = com.example.distortiontracker.R.drawable.traveler_background)
@@ -755,10 +853,22 @@ fun SpaceBackground(
             modifier = Modifier.fillMaxSize()
         )
         
+        // Nebula gradient overlay on top of the background image
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = theme.gradientColors
+                    )
+                )
+        )
+        
         // 2. Animated Space Overlay (Twinkling stars + planets)
         AnimatedSpaceOverlay(
             currentDistortionIndex = currentDistortionIndex,
-            nextDistortionIndex = nextDistortionIndex
+            nextDistortionIndex = nextDistortionIndex,
+            theme = theme
         )
     }
 }
@@ -766,7 +876,8 @@ fun SpaceBackground(
 @Composable
 fun AnimatedSpaceOverlay(
     currentDistortionIndex: Int,
-    nextDistortionIndex: Int
+    nextDistortionIndex: Int,
+    theme: DestinationTheme
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "planetAnimation")
     
@@ -797,12 +908,11 @@ fun AnimatedSpaceOverlay(
             Triple(random.nextFloat(), random.nextFloat(), random.nextFloat() * 4f + 1f)
         }
     }
-
     val currentPlanetRes = getPlanetCurrentDrawableRes(currentDistortionIndex)
     val nextPlanetRes = getPlanetNextDrawableRes(nextDistortionIndex)
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 1. Twinkling Stars Canvas
+        // 1. Twinkling Stars Canvas (tinted with theme particles)
         Canvas(modifier = Modifier.fillMaxSize()) {
             val width = size.width
             val height = size.height
@@ -811,8 +921,13 @@ fun AnimatedSpaceOverlay(
                 val y = star.second * height
                 val starSize = star.third
                 val twinkle = kotlin.math.sin(starPhase + i) * 0.4f + 0.6f
+                val color = if (i % 3 == 0) {
+                    theme.particleColor.copy(alpha = twinkle)
+                } else {
+                    Color.White.copy(alpha = twinkle)
+                }
                 drawCircle(
-                    color = Color.White.copy(alpha = twinkle),
+                    color = color,
                     radius = starSize,
                     center = Offset(x, y)
                 )
@@ -979,5 +1094,276 @@ class DestinationCardShape(private val circleRadiusDp: androidx.compose.ui.unit.
         
         path.close()
         return androidx.compose.ui.graphics.Outline.Generic(path)
+    }
+}
+
+// ═══════════════════════════════════════════════
+// THEME & LORE HELPER DATA CLASSES & METHODS
+// ═══════════════════════════════════════════════
+
+data class DestinationTheme(
+    val primaryColor: Color,
+    val accentColor: Color,
+    val gradientColors: List<Color>,
+    val particleColor: Color
+)
+
+fun getDestinationTheme(index: Int): DestinationTheme {
+    return when (index) {
+        0 -> DestinationTheme(
+            primaryColor = Color(0xFF9C27B0), // Violet
+            accentColor = Color(0xFF00E5FF),  // Teal
+            gradientColors = listOf(Color(0x354A148C), Color(0x15006064), Color(0x05000000)),
+            particleColor = Color(0xFF00E5FF)
+        )
+        1 -> DestinationTheme(
+            primaryColor = Color(0xFF76FF03), // Toxic Green
+            accentColor = Color(0xFFCCFF00),  // Hive Accents
+            gradientColors = listOf(Color(0x351B5E20), Color(0x1533691E), Color(0x05000000)),
+            particleColor = Color(0xFFCCFF00)
+        )
+        2 -> DestinationTheme(
+            primaryColor = Color(0xFFE53935), // Crimson
+            accentColor = Color(0xFF8B0000),  // Dark Red
+            gradientColors = listOf(Color(0x35311B92), Color(0x15B71C1C), Color(0x05000000)),
+            particleColor = Color(0xFFFF8A80)
+        )
+        3 -> DestinationTheme(
+            primaryColor = Color(0xFF80D8FF), // Icy Blue
+            accentColor = Color(0xFFE0F7FA),  // White/Cyan
+            gradientColors = listOf(Color(0x350D47A1), Color(0x15006064), Color(0x05000000)),
+            particleColor = Color(0xFFE0F7FA)
+        )
+        4 -> DestinationTheme(
+            primaryColor = Color(0xFFCD7F32), // Metallic Copper/Brass
+            accentColor = Color(0xFFFF1744),  // Reddish Flora
+            gradientColors = listOf(Color(0x353E2723), Color(0x15B71C1C), Color(0x05000000)),
+            particleColor = Color(0xFFFFD54F)
+        )
+        5 -> DestinationTheme(
+            primaryColor = Color(0xFFD84315), // Rusted Copper / Orange
+            accentColor = Color(0xFF29B6F6),  // Sky Blue
+            gradientColors = listOf(Color(0x354E342E), Color(0x1501579B), Color(0x05000000)),
+            particleColor = Color(0xFF80D8FF)
+        )
+        6 -> DestinationTheme(
+            primaryColor = Color(0xFF2E7D32), // Forest Green
+            accentColor = Color(0xFF90A4AE),  // Stone Grey
+            gradientColors = listOf(Color(0x351B5E20), Color(0x1537474F), Color(0x05000000)),
+            particleColor = Color(0xFFA5D6A7)
+        )
+        else -> DestinationTheme(
+            primaryColor = Color(0xFFE53935),
+            accentColor = Color(0xFF8B0000),
+            gradientColors = listOf(Color(0x35311B92), Color(0x15B71C1C), Color(0x05000000)),
+            particleColor = Color(0xFFFF8A80)
+        )
+    }
+}
+
+data class DestinationInfo(
+    val title: String,
+    val lore: String,
+    val activities: String,
+    val tips: String
+)
+
+fun getDestinationInfo(index: Int): DestinationInfo {
+    return when (index) {
+        0 -> DestinationInfo(
+            title = "DREAMING CITY",
+            lore = "A mystical realm hidden in the Reef, built by the Awoken as a convergence of Light and Dark. Beware the three-week curse cycle.",
+            activities = "Blind Well, Shattered Throne, Ascendant Challenges",
+            tips = "Seek out the cat statues with small gifts, and watch the Ascendant plane for hidden platforms."
+        )
+        1 -> DestinationInfo(
+            title = "SAVATHÛN'S THRONE WORLD",
+            lore = "A shimmering court of Light, malice, and illusion. The Witch Queen's mind made manifest, where truth is a funny thing.",
+            activities = "Wellspring, Altars of Reflection, Lucent Hive Patrols",
+            tips = "Use Deepsight to reveal hidden pathways and chest locations throughout the fluorescent swamps."
+        )
+        2 -> DestinationInfo(
+            title = "MOON",
+            lore = "The scarred surface of Earth's companion. Beneath the dust lies the Scarlet Keep, home to Hive Nightmares and a silent Pyramid ship.",
+            activities = "Altars of Sorrow, Pit of Heresy, Nightmare Hunts",
+            tips = "Defeat Nightmares to earn Phantasmal Fragments, and clear Altars of Sorrow for unique weapons."
+        )
+        3 -> DestinationInfo(
+            title = "EUROPA",
+            lore = "A frozen wasteland of ice and secrets. Beneath the glacial crust lies the Braytech Exoscience facility and the Deep Stone Crypt.",
+            activities = "Empire Hunts, Exo Challenges, Brig Patrols",
+            tips = "Watch out for freezing blizzards that reduce visibility. Use Stasis to shatter frozen targets."
+        )
+        4 -> DestinationInfo(
+            title = "NESSUS",
+            lore = "An unstable Centaur planetoid, converted into a machine world by the Vex. Red vegetation clings to copper structures.",
+            activities = "Battlegrounds, Vex Spire Integrations, Failsafe's Bounties",
+            tips = "Climb the giant red-leafed trees for sniper vantage points. Watch for milk waterfalls—Vex radiolarian fluid is highly toxic."
+        )
+        5 -> DestinationInfo(
+            title = "COSMODROME",
+            lore = "A rusted graveyard of humanity's golden age. Old colony ships stand as silent monuments, surrounded by scavengers.",
+            activities = "Devils' Lair, Shaw Han's Patrols, Lost Sector farms",
+            tips = "Great zone for new Guardians to test weapons and farm Spinmetal Leaves. Keep an eye out for Fallen Walkers."
+        )
+        6 -> DestinationInfo(
+            title = "EDZ",
+            lore = "The European Dead Zone. Nature has reclaimed the ruins of a bustling human territory. Cabal warbases clash with Fallen scavengers.",
+            activities = "Arms Dealer, Glimmer Extractions, Cabal Excavations",
+            tips = "Explore the ruins of Trostland for hidden cellars. Watch out for high-priority targets roaming the forest outskirts."
+        )
+        else -> DestinationInfo(
+            title = "UNKNOWN DESTINATION",
+            lore = "A zone lost to the archives. Proceed with caution.",
+            activities = "N/A",
+            tips = "Keep your weapon loaded."
+        )
+    }
+}
+
+fun getDestinationShortName(name: String): String {
+    return when (name) {
+        "SAVATHUN'S THRONE WORLD" -> "THRONE WORLD"
+        "SAVATHÛN'S THRONE WORLD" -> "THRONE WORLD"
+        "DREAMING CITY" -> "DREAMING CITY"
+        "COSMODROME" -> "COSMODROME"
+        else -> name
+    }
+}
+
+@Composable
+fun SolarScheduleSection(
+    currentDistortionIndex: Int
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        GlassLayer(
+            shape = RoundedCornerShape(12.dp),
+            color = GlassBackground,
+            borderColor = GlassBorder
+        )
+        Column {
+            // Header row (clickable to toggle)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Rotating arrowhead icon
+                val arrowRotation by animateFloatAsState(
+                    targetValue = if (expanded) 90f else 0f,
+                    animationSpec = spring(stiffness = Spring.StiffnessLow),
+                    label = "arrowRotation"
+                )
+                Canvas(modifier = Modifier.size(16.dp)) {
+                    withTransform({
+                        rotate(arrowRotation, Offset(size.width / 2f, size.height / 2f))
+                    }) {
+                        val path = androidx.compose.ui.graphics.Path().apply {
+                            moveTo(0f, size.height * 0.15f)
+                            lineTo(size.width * 0.9f, size.height / 2f)
+                            lineTo(0f, size.height * 0.85f)
+                            lineTo(size.width * 0.25f, size.height / 2f)
+                            close()
+                        }
+                        drawPath(path, NeonCrimson)
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "SOLAR SCHEDULE (24H)",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            AnimatedVisibility(visible = expanded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 12.dp, end = 12.dp, bottom = 16.dp)
+                ) {
+                    Text(
+                        text = "Forecast of upcoming hourly paracausal distortions.",
+                        color = Color(0xFFB0BEC5),
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
+                    )
+
+                    // Horizontally scrollable row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val calendar = Calendar.getInstance()
+                        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+
+                        for (h in 0..23) {
+                            val targetHour = (currentHour + h) % 24
+                            val timeLabel = if (h == 0) "NOW" else String.format(Locale.US, "%02d:00", targetHour)
+                            val destIndex = (currentDistortionIndex + h) % DistortionManager.DESTINATIONS.size
+                            val destName = DistortionManager.DESTINATIONS[destIndex]
+                            val destTheme = getDestinationTheme(destIndex)
+
+                            // Small item card
+                            Box(
+                                modifier = Modifier
+                                    .width(110.dp)
+                                    .height(90.dp)
+                            ) {
+                                GlassLayer(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color(0x700E1116),
+                                    borderColor = destTheme.primaryColor.copy(alpha = 0.4f)
+                                )
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(8.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = timeLabel,
+                                        color = if (h == 0) NeonCrimson else Color(0xFFB0BEC5),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        fontFamily = FontFamily.Monospace
+                                    )
+                                    Text(
+                                        text = getDestinationShortName(destName),
+                                        color = Color.White,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        lineHeight = 13.sp
+                                    )
+                                    // A tiny accent line at the bottom
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.6f)
+                                            .height(2.dp)
+                                            .background(destTheme.primaryColor, RoundedCornerShape(1.dp))
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

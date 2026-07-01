@@ -2,6 +2,16 @@
 
 All notable changes to the Destiny Distortion Tracker will be documented in this file.
 
+## [9.8.0.0] - 2026-07-01
+### Added
+- **Dynamic Themes**: Implemented responsive visual themes in the Distortion Tracker that dynamically adjust based on active tracking states.
+- **24h Timeline**: Integrated a comprehensive 24-hour timeline display tracking future distortion events.
+- **Info Cards**: Introduced details cards to present status information and tracking metrics cleanly.
+- **Custom Alerts**: Added customizable alert parameters for notifications and custom warning thresholds.
+- **Home Widgets**: Created home screen widgets for tracking active and upcoming events at a glance without opening the app.
+
+---
+
 ## [9.7.0.3] - 2026-07-01
 ### Added
 - **Battery Optimization Onboarding**: Added background check at startup prompting users to disable battery restrictions (`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`).

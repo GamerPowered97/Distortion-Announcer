@@ -6,6 +6,8 @@ import android.content.Intent
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import androidx.core.app.NotificationCompat
 import com.example.distortiontracker.R
 
@@ -19,12 +21,23 @@ class DistortionAlarmReceiver : BroadcastReceiver() {
         val targetIndex = intent.getIntExtra("TARGET_INDEX", -1)
         val is5MinuteWarning = intent.getBooleanExtra("IS_5_MINUTE_WARNING", false)
         
+        val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val vibePattern = longArrayOf(0, 250, 250, 250, 500, 250, 500)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 "distortion_channel",
                 "Distortion Alerts",
                 NotificationManager.IMPORTANCE_HIGH
-            )
+            ).apply {
+                val audioAttributes = AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .build()
+                setSound(soundUri, audioAttributes)
+                enableVibration(true)
+                vibrationPattern = vibePattern
+            }
             notificationManager.createNotificationChannel(channel)
         }
 
@@ -48,6 +61,8 @@ class DistortionAlarmReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .setUsesChronometer(true)
             .setWhen(targetTimeMillis)
+            .setSound(soundUri)
+            .setVibrate(vibePattern)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             notificationBuilder.setChronometerCountDown(true)
